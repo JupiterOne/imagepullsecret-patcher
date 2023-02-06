@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    uses: jupiterone/.github/.github/workflows/publish_docker_ghcr.yaml@main
+    uses: jupiterone/.github/.github/workflows/publish_docker_ghcr.yaml@v1.0.1
     with:
       package-name: jupiterone/imagepullsecret-patcher
     secrets: inherit
