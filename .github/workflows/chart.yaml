@@ -1,9 +1,6 @@
 name: Release Chart
 
 on:
-  push:
-    tags:
-      - v*
   workflow_dispatch:
 
 jobs:
