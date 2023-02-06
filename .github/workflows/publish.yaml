@@ -1,0 +1,8 @@
+name: Publish image to Docker & GHCR
+
+jobs:
+  build:
+    uses: jupiterone/.github/.github/workflows/publish_docker_ghcr.yaml
+    with:
+      package-name: imagepullsecret-patcher
+    secrets: inherit
