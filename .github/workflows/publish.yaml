@@ -8,4 +8,8 @@ jobs:
     uses: jupiterone/.github/.github/workflows/publish_docker_ghcr.yaml@v1.0.1
     with:
       package-name: jupiterone/imagepullsecret-patcher
-    secrets: inherit
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      GHCR_USERNAME: ${{ github.actor }}
+      GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
