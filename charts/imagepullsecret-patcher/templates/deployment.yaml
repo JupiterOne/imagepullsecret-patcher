@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "imagepullsecret-patcher.fullname" . }}
+  labels:
+    app: {{ template "imagepullsecret-patcher.fullname" . }}
+    chart: "{{ .Chart.Name }}"
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{.Values.replicaCount}}
+  selector:
+    matchLabels:
+      name: {{ template "imagepullsecret-patcher.fullname" . }}
+  template:
+    metadata:
+      labels:
+        name: {{ template "imagepullsecret-patcher.fullname" . }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      automountServiceAccountToken: true
+      serviceAccountName: {{ template "imagepullsecret-patcher.fullname" . }}
+      containers:
+        - name: {{ template "imagepullsecret-patcher.fullname" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CONFIG_SECRETNAME
+              value: {{ .Values.managedSecretName }}
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+          volumeMounts:
+            - name: src-dockerconfigjson
+              mountPath: "/app/secrets"
+              readOnly: true
+      volumes:
+        - name: src-dockerconfigjson
+          secret:
+            secretName: {{ template "imagepullsecret-patcher.fullname" . }}-dockerconfigjson
