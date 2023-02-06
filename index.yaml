@@ -3,6 +3,15 @@ entries:
   imagepullsecret-patcher:
   - apiVersion: v2
     appVersion: v0.14
+    created: "2023-02-06T20:27:00.098925984Z"
+    description: imagepullsecret-patcher
+    digest: 3159b36d1144347a339c00b0617554e33baa001100dc8982f81a0f059444e1a2
+    name: imagepullsecret-patcher
+    urls:
+    - https://github.com/JupiterOne/imagepullsecret-patcher/releases/download/imagepullsecret-patcher-1.0.2/imagepullsecret-patcher-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: v0.14
     created: "2023-02-06T19:59:25.604182718Z"
     description: imagepullsecret-patcher
     digest: 2ca19cec10a8313836d648b0cfc65f920a451a3a779997391d55b4d7032271cb
@@ -10,4 +19,4 @@ entries:
     urls:
     - https://github.com/JupiterOne/imagepullsecret-patcher/releases/download/imagepullsecret-patcher-1.0.1/imagepullsecret-patcher-1.0.1.tgz
     version: 1.0.1
-generated: "2023-02-06T19:59:25.604188418Z"
+generated: "2023-02-06T20:27:00.098940984Z"
