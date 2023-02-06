@@ -4,7 +4,7 @@ image:
   # docker image
   repository: jupiterone/imagepullsecret-patcher
   # docker image tag
-  tag: v0.14.0
+  tag: 0.14.0
   pullPolicy: IfNotPresent
   pullSecrets: []
 managedSecretName: "CHANGE_ME"
