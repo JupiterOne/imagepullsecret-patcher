@@ -42,4 +42,4 @@ spec:
       volumes:
         - name: src-dockerconfigjson
           secret:
-            secretName: {{ template "imagepullsecret-patcher.fullname" . }}-dockerconfigjson
+            secretName: {{ .Values.managedSecretName }}
