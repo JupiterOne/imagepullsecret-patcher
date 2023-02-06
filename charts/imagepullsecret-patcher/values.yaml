@@ -14,7 +14,7 @@ env:
   #show DEBUG logs
   CONFIG_DEBUG: false
   #only modify secrets which were created by imagepullsecret
-  CONFIG_MANAGEDONLY: false
+  CONFIG_MANAGEDONLY: true
   #run the update loop once, allowing for cronjob scheduling if desired
   CONFIG_RUNONCE: false
   #comma-separated list of serviceaccounts to patch
