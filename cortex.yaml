@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Imagepullsecret Patcher
+  title: imagepullsecret-patcher
   description: Automatically generated package.json, please edit manually
   x-cortex-git:
     github:
