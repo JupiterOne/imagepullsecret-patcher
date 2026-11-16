@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -170,11 +171,11 @@ func runTestCase(t *testing.T, testName string, tc testCase) {
 }
 
 func processSecretDefault(k8s *k8sClient) error {
-	return processSecret(k8s, v1.NamespaceDefault)
+	return processSecret(context.Background(), k8s, v1.NamespaceDefault)
 }
 
 func processServiceAccountDefault(k8s *k8sClient) error {
-	return processServiceAccount(k8s, v1.NamespaceDefault)
+	return processServiceAccount(context.Background(), k8s, v1.NamespaceDefault)
 }
 
 func TestNamespaceIsExcluded(t *testing.T) {
@@ -237,36 +238,36 @@ func TestNamespaceIsExcluded(t *testing.T) {
 
 // a set of helper functions
 func helperCreateValidSecret(k8s *k8sClient) error {
-	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Create(dockerconfigSecret(v1.NamespaceDefault))
+	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Create(context.Background(), dockerconfigSecret(v1.NamespaceDefault), metav1.CreateOptions{})
 	return err
 }
 
 func helperCreateOpaqueSecret(k8s *k8sClient) error {
-	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Create(&v1.Secret{
+	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configSecretName,
 			Namespace: v1.NamespaceDefault,
 		},
 		Type: corev1.SecretTypeOpaque,
-	})
+	}, metav1.CreateOptions{})
 	return err
 }
 
 func helperCreateServiceAccountWithoutImagePullSecret(serviceAccountName string) step {
 	return func(k8s *k8sClient) error {
-		_, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Create(&v1.ServiceAccount{
+		_, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Create(context.Background(), &v1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceAccountName,
 				Namespace: v1.NamespaceDefault,
 			},
-		})
+		}, metav1.CreateOptions{})
 		return err
 	}
 }
 
 func helperCreateServiceAccountWithImagePullSecret(secretName, serviceAccountName string) step {
 	return func(k8s *k8sClient) error {
-		_, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Create(&v1.ServiceAccount{
+		_, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Create(context.Background(), &v1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceAccountName,
 				Namespace: v1.NamespaceDefault,
@@ -276,7 +277,7 @@ func helperCreateServiceAccountWithImagePullSecret(secretName, serviceAccountNam
 					Name: secretName,
 				},
 			},
-		})
+		}, metav1.CreateOptions{})
 		return err
 	}
 }
@@ -303,7 +304,7 @@ func helperAllServiceAccountOff(_ *k8sClient) error {
 
 // a set of assertion functions
 func assertNoSecret(k8s *k8sClient) error {
-	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(configSecretName, metav1.GetOptions{})
+	_, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(context.Background(), configSecretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return nil
 	}
@@ -314,7 +315,7 @@ func assertNoSecret(k8s *k8sClient) error {
 }
 
 func assertSecretIsValid(k8s *k8sClient) error {
-	secret, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(configSecretName, metav1.GetOptions{})
+	secret, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(context.Background(), configSecretName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("assert secret valid but no found")
 	}
@@ -325,7 +326,7 @@ func assertSecretIsValid(k8s *k8sClient) error {
 }
 
 func assertSecretIsInvalid(k8s *k8sClient) error {
-	secret, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(configSecretName, metav1.GetOptions{})
+	secret, err := k8s.clientset.CoreV1().Secrets(v1.NamespaceDefault).Get(context.Background(), configSecretName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("assert secret invalid but no found")
 	}
@@ -346,7 +347,7 @@ func assertHasError(fn step) step {
 
 func assertHasImagePullSecret(secretName, serviceAccountName string) step {
 	return func(k8s *k8sClient) error {
-		sa, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Get(serviceAccountName, metav1.GetOptions{})
+		sa, err := k8s.clientset.CoreV1().ServiceAccounts(v1.NamespaceDefault).Get(context.Background(), serviceAccountName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
