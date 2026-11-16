@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -82,7 +83,7 @@ func main() {
 
 	for {
 		log.Debug("Loop started")
-		loop(k8s)
+		loop(context.Background(), k8s)
 		if configRunOnce {
 			log.Info("Exiting after single loop per `CONFIG_RUNONCE`")
 			os.Exit(0)
@@ -91,7 +92,7 @@ func main() {
 	}
 }
 
-func loop(k8s *k8sClient) {
+func loop(ctx context.Context, k8s *k8sClient) {
 	var err error
 
 	// Populate secret value to set
@@ -101,7 +102,7 @@ func loop(k8s *k8sClient) {
 	}
 
 	// get all namespaces
-	namespaces, err := k8s.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaces, err := k8s.clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Panic(err)
 	}
@@ -115,14 +116,14 @@ func loop(k8s *k8sClient) {
 		}
 		log.Debugf("[%s] Start processing", namespace)
 		// for each namespace, make sure the dockerconfig secret exists
-		err = processSecret(k8s, namespace)
+		err = processSecret(ctx, k8s, namespace)
 		if err != nil {
 			// if has error in processing secret, should skip processing service account
 			log.Error(err)
 			continue
 		}
 		// get default service account, and patch image pull secret if not exist
-		err = processServiceAccount(k8s, namespace)
+		err = processServiceAccount(ctx, k8s, namespace)
 		if err != nil {
 			log.Error(err)
 		}
@@ -142,10 +143,10 @@ func namespaceIsExcluded(ns corev1.Namespace) bool {
 	return false
 }
 
-func processSecret(k8s *k8sClient, namespace string) error {
-	secret, err := k8s.clientset.CoreV1().Secrets(namespace).Get(configSecretName, metav1.GetOptions{})
+func processSecret(ctx context.Context, k8s *k8sClient, namespace string) error {
+	secret, err := k8s.clientset.CoreV1().Secrets(namespace).Get(ctx, configSecretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		_, err := k8s.clientset.CoreV1().Secrets(namespace).Create(dockerconfigSecret(namespace))
+		_, err := k8s.clientset.CoreV1().Secrets(namespace).Create(ctx, dockerconfigSecret(namespace), metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("[%s] Failed to create secret: %v", namespace, err)
 		}
@@ -162,12 +163,12 @@ func processSecret(k8s *k8sClient, namespace string) error {
 		case secretWrongType, secretNoKey, secretDataNotMatch:
 			if configForce {
 				log.Warnf("[%s] Secret is not valid, overwritting now", namespace)
-				err = k8s.clientset.CoreV1().Secrets(namespace).Delete(configSecretName, &metav1.DeleteOptions{})
+				err = k8s.clientset.CoreV1().Secrets(namespace).Delete(ctx, configSecretName, metav1.DeleteOptions{})
 				if err != nil {
 					return fmt.Errorf("[%s] Failed to delete secret [%s]: %v", namespace, configSecretName, err)
 				}
 				log.Warnf("[%s] Deleted secret [%s]", namespace, configSecretName)
-				_, err = k8s.clientset.CoreV1().Secrets(namespace).Create(dockerconfigSecret(namespace))
+				_, err = k8s.clientset.CoreV1().Secrets(namespace).Create(ctx, dockerconfigSecret(namespace), metav1.CreateOptions{})
 				if err != nil {
 					return fmt.Errorf("[%s] Failed to create secret: %v", namespace, err)
 				}
@@ -180,8 +181,8 @@ func processSecret(k8s *k8sClient, namespace string) error {
 	return nil
 }
 
-func processServiceAccount(k8s *k8sClient, namespace string) error {
-	sas, err := k8s.clientset.CoreV1().ServiceAccounts(namespace).List(metav1.ListOptions{})
+func processServiceAccount(ctx context.Context, k8s *k8sClient, namespace string) error {
+	sas, err := k8s.clientset.CoreV1().ServiceAccounts(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("[%s] Failed to list service accounts: %v", namespace, err)
 	}
@@ -198,7 +199,7 @@ func processServiceAccount(k8s *k8sClient, namespace string) error {
 		if err != nil {
 			return fmt.Errorf("[%s] Failed to get patch string: %v", namespace, err)
 		}
-		_, err = k8s.clientset.CoreV1().ServiceAccounts(namespace).Patch(sa.Name, types.StrategicMergePatchType, patch)
+		_, err = k8s.clientset.CoreV1().ServiceAccounts(namespace).Patch(ctx, sa.Name, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
 		if err != nil {
 			return fmt.Errorf("[%s] Failed to patch imagePullSecrets to service account [%s]: %v", namespace, sa.Name, err)
 		}
